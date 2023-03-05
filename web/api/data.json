@@ -1,0 +1,26 @@
+[
+    {
+        "id": "bin-1",
+        "location": {
+            "lat": 37.7749,
+            "lng": -122.4194
+        },
+        "status": "not full"
+    },
+    {
+        "id": "bin-2",
+        "location": {
+            "lat": 37.7755,
+            "lng": -122.4181
+        },
+        "status": "full"
+    },
+    {
+        "id": "bin-3",
+        "location": {
+            "lat": 37.7743,
+            "lng": -122.4168
+        },
+        "status": "not full"
+    }
+]
