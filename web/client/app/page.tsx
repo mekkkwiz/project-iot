@@ -1,35 +1,31 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import Image from "next/image";
 import Link from "next/link";
 import Head from "next/head";
 import { Bin } from "../types";
-
-const BinMarker = ({ id, location, status }: Bin) => {
-  const icon = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: status === "full" ? "red" : "green",
-    fillOpacity: 0.8,
-    scale: 8,
-    strokeColor: "white",
-    strokeWeight: 2,
-  };
-
-  return <Marker key={id} position={location} icon={icon} />;
-};
+import io from 'socket.io-client';
 
 const Map = () => {
   const [bins, setBins] = useState<Bin[]>([]);
 
+  const socketInitializer = async () => {
+    const response = await fetch('/api/socket');
+    const { endpoint } = await response.json();
+    const socket = io(endpoint);
+
+    socket.on('connect', () => {
+      console.log('connected');
+    });
+
+    socket.on('bins-updated', (data: string) => {
+      const bins = JSON.parse(data);
+      setBins(bins);
+    });
+  };
+
   useEffect(() => {
-    const fetchBins = async () => {
-      const response = await fetch("/api/bins");
-      const data = await response.json();
-      setBins(data);
-    };
-    fetchBins();
+    socketInitializer();
   }, []);
 
   const mapStyles = {
@@ -65,6 +61,19 @@ const Map = () => {
     borderRadius: "5px",
     backgroundColor: "darkblue",
     cursor: "pointer",
+  };
+
+  const BinMarker = ({ id, location, status }: Bin) => {
+    const icon = {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: status === "full" ? "red" : "green",
+      fillOpacity: 0.8,
+      scale: 8,
+      strokeColor: "white",
+      strokeWeight: 2,
+    };
+
+    return <Marker key={id} position={location} icon={icon} />;
   };
 
   const defaultCenter = {
