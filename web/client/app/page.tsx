@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,11 +8,48 @@ import Head from "next/head";
 import { Bin } from "../types";
 import io from 'socket.io-client';
 
+type LatLngLiteral = google.maps.LatLngLiteral;
+type MapOptions = google.maps.MapOptions;
+
 const Map = () => {
+  const mapRef = useRef<google.maps.Map>();
+  const [center, setCenter] = useState<LatLngLiteral>({ lat: 18.795598, lng: 98.9510693 });
+
+  const centerRef = useRef(center);
+
+  const options = useMemo<MapOptions>(
+    () => ({
+      disableDefaultUI: true,
+      clickableIcons: false,
+    }),
+    []
+  );
+
+  const onLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+    centerRef.current = center;
+  }, [center]);
+
+  const onCenterChanged = useCallback(() => {
+    if (mapRef.current) {
+      const newCenter = mapRef.current.getCenter();
+      if (newCenter) {
+        const latLng = { lat: newCenter.lat(), lng: newCenter.lng() };
+        if (JSON.stringify(latLng) !== JSON.stringify(centerRef.current)) {
+          setCenter(latLng);
+          centerRef.current = latLng;
+        }
+      }
+    } else {
+      setCenter(centerRef.current);
+      console.log("Error: mapRef.current is null");
+    }
+  }, []);
+
   const [bins, setBins] = useState<Bin[]>([]);
 
   const socketInitializer = async () => {
-    const response = await fetch('/api/socket');
+    const response = await fetch('http://localhost:3030/api/socket');
     const { endpoint } = await response.json();
     const socket = io(endpoint);
 
@@ -21,6 +60,11 @@ const Map = () => {
     socket.on('bins-updated', (data: string) => {
       const bins = JSON.parse(data);
       setBins(bins);
+
+      // Update the map's center to the first bin's location
+      if (bins.length > 0) {
+        const firstBin = bins[0];
+      }
     });
   };
 
@@ -28,40 +72,6 @@ const Map = () => {
     socketInitializer();
   }, []);
 
-  const mapStyles = {
-    height: "100vh",
-    width: "100%",
-  };
-
-  const navbarStyles = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "10px",
-    backgroundColor: "lightblue",
-  };
-
-  const logoStyles = {
-    width: "100px",
-    height: "50px",
-    cursor: "pointer",
-  };
-
-  const navLinksStyles = {
-    display: "flex",
-    gap: "10px",
-  };
-
-  const navLinkStyles = {
-    textDecoration: "none",
-    color: "white",
-    fontWeight: "bold",
-    fontSize: "18px",
-    padding: "10px",
-    borderRadius: "5px",
-    backgroundColor: "darkblue",
-    cursor: "pointer",
-  };
 
   const BinMarker = ({ id, location, status }: Bin) => {
     const icon = {
@@ -76,38 +86,20 @@ const Map = () => {
     return <Marker key={id} position={location} icon={icon} />;
   };
 
-  const defaultCenter = {
-    lat: 18.795598,
-    lng: 98.9510693,
-  };
-
   return (
     <>
       <Head>
         <title>Bin Map</title>
       </Head>
-      <nav style={navbarStyles}>
-        <Link href="/">
-          <Image src="/asset/logo.png" alt="Logo" width={46.5} height={34} />
-        </Link>
-        <div style={navLinksStyles}>
-          <Link href="/about" className="navLinksStyles">
-            About
-          </Link>
-          <Link href="/contact" className="navLinksStyles">
-            Contact
-          </Link>
-        </div>
-      </nav>
       <LoadScript
-        googleMapsApiKey={
-          process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_DEFAULT_API_KEY"
-        }
+        googleMapsApiKey={ process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_DEFAULT_API_KEY" }
       >
         <GoogleMap
-          mapContainerStyle={mapStyles}
+          mapContainerStyle={{ height: "100vh", width: "100vw" }}
           zoom={18}
-          center={defaultCenter}
+          center={center}
+          onLoad={onLoad}
+          onDragEnd={onCenterChanged}
         >
           {bins.map((bin) => (
             <BinMarker

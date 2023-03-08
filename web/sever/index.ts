@@ -1,4 +1,5 @@
-import express, { Request, Response } from "express";
+require("dotenv").config();
+import express, { Request, Response, NextFunction } from "express";
 import admin from "firebase-admin";
 import { Bin } from "./types";
 import http from "http";
@@ -23,73 +24,79 @@ const app = express();
 app.use(express.json());
 
 const server = http.createServer(app);
-const io = new SocketIOServer(server);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: '*',
+  },
+});
 
-io.on("connection", (socket: Socket) => {
+io.on("connection", async (socket: Socket) => {
   console.log(`Client connected to socket`);
+  try {
+    const bins = await getAllBinsFromDatabase();
+    const data = JSON.stringify(bins);
+    socket.emit("bins-updated", data); // send initial data to the client
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
   socket.on("disconnect", () => {
     console.log(`Client disconnected from socket`);
   });
 });
+
 
 const sendUpdatedBinsToClients = (bins: Bin[]) => {
   const data = JSON.stringify(bins);
   io.emit("bins-updated", data);
 };
 
-app.get("/bins", async (req: Request, res: Response) => {
+const getAllBinsFromDatabase = async (): Promise<Bin[]> => {
+  const ref = admin.database().ref('/bins');
+  const snapshot = await ref.once('value');
+  const bins: Bin[] = [];
+
+  snapshot.forEach((childSnapshot) => {
+    const bin: Bin = {
+      id: childSnapshot.key as string,
+      ...childSnapshot.val(),
+    };
+    bins.push(bin);
+  });
+
+  return bins;
+};
+
+app.get("/api/bins", async (req: Request, res: Response) => {
   try {
-    const ref = admin.database().ref("/bins");
-
-    // Convert the Firebase snapshot to an array of Bin objects
-    const bins: Bin[] = [];
-    const snapshot = await ref.once("value");
-    snapshot.forEach((childSnapshot) => {
-      const bin: Bin = {
-        id: childSnapshot.key as string,
-        ...childSnapshot.val(),
-      };
-      bins.push(bin);
-    });
-
-    // Attach a listener to the reference to get data in real-time
-    ref.on("child_changed", (childSnapshot) => {
-      const updatedBin: Bin = {
-        id: childSnapshot.key as string,
-        ...childSnapshot.val(),
-      };
-      const index = bins.findIndex((bin) => bin.id === updatedBin.id);
-      if (index !== -1) {
-        // Update the existing bin object in the array
-        bins[index] = updatedBin;
-
-        // Send the updated data to the client via socket
-        sendUpdatedBinsToClients(bins);
-      }
-    });
-
+    const bins = await getAllBinsFromDatabase();
     res.status(200).json(bins);
+
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ message: "Error fetching data" });
   }
 });
 
-app.post("/bins", async (req: Request, res: Response) => {
+app.post("/api/bins", async (req: Request, res: Response) => {
   try {
     const binData: Bin = req.body;
     await writeDataToDatabase(binData);
     res.status(200).json({ message: "Data saved successfully" });
+    // Emit the 'bins-updated' event to all connected clients
+
+    const bins = await getAllBinsFromDatabase();
+    sendUpdatedBinsToClients(bins);
   } catch (error) {
     console.error("Error saving data:", error);
     res.status(500).json({ message: "Error saving data" });
   }
 });
 
-app.all("*", (req: Request, res: Response) => {
-  res.status(405).json({ message: "Method not allowed" });
+app.get("/api/socket", async (req: Request, res: Response) => {
+  const endpoint = `${process.env.SOCKET_HOST}:${process.env.SOCKET_PORT}`;
+  res.json({ endpoint });
 });
 
-server.listen(3030, () => {
-  console.log("Server is listening on port 3000");
+server.listen(process.env.PORT, () => {
+  console.log(`Server is listening on port ${process.env.PORT}`);
 });
