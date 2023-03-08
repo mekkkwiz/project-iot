@@ -78,7 +78,7 @@ You can click on the logo in the top left corner to go back to the homepage. You
 
 ## Built With
 
-Next.js - React framework for server-side rendering
-React Google Maps API - React components for Google Maps
-Firebase Realtime Database - Cloud-hosted NoSQL database
-TypeScript - Superset of JavaScript with static typing
+- Next.js - React framework for server-side rendering
+- React Google Maps API - React components for Google Maps
+- Firebase Realtime Database - Cloud-hosted NoSQL database
+- TypeScript - Superset of JavaScript with static typing
