@@ -30,7 +30,7 @@ const Map = () => {
     centerRef.current = center;
   }, [center]);
 
-  const onCenterChanged = useCallback(() => {
+  const onDragEnd = useCallback(() => {
     if (mapRef.current) {
       const newCenter = mapRef.current.getCenter();
       if (newCenter) {
@@ -99,7 +99,7 @@ const Map = () => {
           zoom={18}
           center={center}
           onLoad={onLoad}
-          onDragEnd={onCenterChanged}
+          onDragEnd={onDragEnd}
         >
           {bins.map((bin) => (
             <BinMarker

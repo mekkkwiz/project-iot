@@ -1,15 +1,17 @@
 # Bin Map
 
-This is a web application that shows the locations and statuses of waste bins on a Google Map.
+Bin Map is a web application that displays the locations and statuses of waste bins on a Google Map. The project is divided into two parts: client (frontend) and server (backend).
 
 ## Getting Started
 
 ### Prerequisites
 
+Before getting started, you'll need to have the following:
+
 - Node.js (version 14 or later)
 - Firebase account and a project set up with Realtime Database
 
-### Installing
+### Installation
 
 1. Clone the repository and navigate to the project directory.
 
@@ -18,13 +20,16 @@ This is a web application that shows the locations and statuses of waste bins on
     cd bin-map
     ```
 
-2. Install the required packages using NPM.
+2. Install the required packages for both client and server using NPM.
 
     ```bash
+    cd client
+    npm install
+    cd ../server
     npm install
     ```
 
-3. Set up your Firebase credentials by creating a file named firebase-adminsdk.json in the pages/api directory with the following contents:
+3. Set up your Firebase credentials by creating a file named firebase-adminsdk.json in the server directory with the following contents:
 
     ```json
     {
@@ -43,7 +48,7 @@ This is a web application that shows the locations and statuses of waste bins on
 
     Replace YOUR_PROJECT_ID, YOUR_PRIVATE_KEY_ID, YOUR_PRIVATE_KEY, YOUR_CLIENT_EMAIL, and YOUR_CLIENT_ID with your own Firebase project credentials.
 
-4. Set up your Google Maps API key by creating a .env file in the root directory with the following contents:
+4. Set up your Google Maps API key by creating a .env file in the client directory with the following contents:
 
     ```.env
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_API_KEY
@@ -53,23 +58,27 @@ This is a web application that shows the locations and statuses of waste bins on
 
 ### Running
 
-1. Start the development server.
+1. Start the development server for both client and server.
 
     ```bash
+    Copy code
+    cd client
+    npm run dev
+    cd ../server
     npm run dev
     ```
 
-2. Open your web browser and navigate to <http://localhost:3000>.
+2. Open your web browser and navigate to client <http://localhost:3000> and port 3030 for server.
 
 ### Usage
 
-The web application shows a Google Map with markers for each bin location. The markers are colored red if the bin is full and green if the bin is not full.
+The web application displays a Google Map with markers for each bin location. The markers are colored red if the bin is full and green if the bin is not full.
 
 You can click on the logo in the top left corner to go back to the homepage. You can also click on the "About" or "Contact" links in the top right corner to navigate to the respective pages.
 
 ## Built With
 
-- Next.js - React framework for server-side rendering
-- React Google Maps API - React components for Google Maps
-- Firebase Realtime Database - Cloud-hosted NoSQL database
-- TypeScript - Superset of JavaScript with static typing
+Next.js - React framework for server-side rendering
+React Google Maps API - React components for Google Maps
+Firebase Realtime Database - Cloud-hosted NoSQL database
+TypeScript - Superset of JavaScript with static typing
