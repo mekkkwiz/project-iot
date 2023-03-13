@@ -16,8 +16,8 @@ Before getting started, you'll need to have the following:
 1. Clone the repository and navigate to the project directory.
 
     ```bash
-    git clone https://github.com/your-username/bin-map.git
-    cd bin-map
+    git clone https://github.com/mekkkwiz/project-iot.git
+    cd web
     ```
 
 2. Install the required packages for both client and server using NPM.
@@ -46,7 +46,7 @@ Before getting started, you'll need to have the following:
     }
     ```
 
-    Replace YOUR_PROJECT_ID, YOUR_PRIVATE_KEY_ID, YOUR_PRIVATE_KEY, YOUR_CLIENT_EMAIL, and YOUR_CLIENT_ID with your own Firebase project credentials.
+    Replace `YOUR_PROJECT_ID`, `YOUR_PRIVATE_KEY_ID`, `YOUR_PRIVATE_KEY`, `YOUR_CLIENT_EMAIL`, and `YOUR_CLIENT_ID` with your own Firebase project credentials.
 
 4. Set up your Google Maps API key by creating a .env file in the client directory with the following contents:
 
@@ -54,7 +54,7 @@ Before getting started, you'll need to have the following:
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_API_KEY
     ```
 
-    Replace YOUR_API_KEY with your own Google Maps API key.
+    Replace `YOUR_API_KEY` with your own Google Maps API key.
 
 ### Running
 
