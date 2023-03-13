@@ -2,13 +2,17 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 
-const char* ssid = "308_MAIFREE_WIFI";
-const char* password = "beer2543";
-const char* serverUrl = "http://722b-202-44-215-20.ap.ngrok.io/api/bins";
+// const char* ssid = "308_MAIFREE_WIFI";
+// const char* password = "beer2543";
 
-#define TRIG_PIN 4
-#define ECHO_PIN 2
-#define LED_PIN BUILTIN_LED
+const char* ssid = "KonSod";
+const char* password = "12345678";
+
+const char* serverUrl = "http://5351-2001-44c8-4231-c314-244c-c74f-a2dd-7d91.ap.ngrok.io/api/bins";
+
+#define TRIG_PIN 16
+#define ECHO_PIN 5
+#define LED_PIN 0
 #define RESISTOR_PIN A0
 
 long duration;
@@ -38,12 +42,12 @@ void loop() {
   digitalWrite(TRIG_PIN, LOW);
 
   // for real untrasonic
-  // duration = pulseIn(ECHO_PIN, HIGH);
-  // distance = duration * 0.034 / 2;
+  duration = pulseIn(ECHO_PIN, HIGH);
+  distance = duration * 0.034 / 2;
 
-  // untrasonic simulator with variable resistor
-  int resistance = analogRead(RESISTOR_PIN);
-  int distance = map(resistance, 0, 1023, 0, 500);
+  // // untrasonic simulator with variable resistor
+  // int resistance = analogRead(RESISTOR_PIN);
+  // int distance = map(resistance, 0, 1023, 0, 500);
 
 
 
@@ -54,11 +58,11 @@ void loop() {
   if (distance < 50) {            // if bin is full
     digitalWrite(LED_PIN, HIGH);  // turn LED to red
     currentStatus = "full";
-    delay(10000);                 // wait for 10 seconds
+    delay(5000);                 // wait for 5 seconds
   } else {
     digitalWrite(LED_PIN, LOW);   // turn LED off
     currentStatus = "not full";
-    delay(10000);                 // wait for 10 seconds
+    delay(5000);                 // wait for 5 seconds
   }
 
   if (currentStatus != previousStatus) {
