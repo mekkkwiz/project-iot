@@ -82,7 +82,11 @@ void sendRequest(String status)
     http.addHeader("Content-Type", "application/json");
 
     const String binId = "bin-02";
-    const String binLocation = "{\"lat\":18.7954436,\"lng\":98.9513678}";
+    const String binLocation = "{
+      \"label\":\"โรงอาหาร\",
+      \"lat\":18.7954436,
+      \"lng\":98.9513678
+    }";
 
     String payload = "{\"id\":\"" + binId + "\",\"location\":" + binLocation + ",\"status\":\"" + status + "\"}";
     Serial.print("Payload: ");
