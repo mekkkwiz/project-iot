@@ -1,26 +1,39 @@
 require("dotenv").config();
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response } from "express";
 import admin from "firebase-admin";
-import { Bin } from "./types";
 import http from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
+import { Bin, DBbin } from "./types";
+import cors from 'cors';
 
 const serviceAccount = require("./firebase-adminsdk.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL:
-    "https://iot-project-643b6-default-rtdb.asia-southeast1.firebasedatabase.app/",
 });
 
+const db = admin.firestore();
+
 const writeDataToDatabase = async (binData: Bin) => {
-  const ref = admin.database().ref("/bins");
-  await ref.child(binData.id).set(binData);
+  const binsRef = db.collection("bins");
+  const binRef = binsRef.doc(binData.id);
+  const currentData = (await binRef.get()).data();
+  const currentStatus = currentData?.status || [];
+  const updatedStatus = [
+    ...currentStatus,
+    {
+      time: new Date().toISOString(),
+      isFull: binData.status === "full",
+    },
+  ];
+  await binRef.set({ ...binData, status: updatedStatus });
   console.log(`Data for bin ${binData.id} saved successfully.`);
 };
 
+
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 const server = http.createServer(app);
@@ -44,27 +57,31 @@ io.on("connection", async (socket: Socket) => {
   });
 });
 
-
-const sendUpdatedBinsToClients = (bins: Bin[]) => {
+const sendUpdatedBinsToClients = (bins: DBbin[]) => {
   const data = JSON.stringify(bins);
   io.emit("bins-updated", data);
 };
 
-const getAllBinsFromDatabase = async (): Promise<Bin[]> => {
-  const ref = admin.database().ref('/bins');
-  const snapshot = await ref.once('value');
-  const bins: Bin[] = [];
+const getAllBinsFromDatabase = async (): Promise<DBbin[]> => {
+  const binsRef = db.collection("bins");
+  const snapshot = await binsRef.get();
+  const bins: DBbin[] = [];
 
-  snapshot.forEach((childSnapshot) => {
-    const bin: Bin = {
-      id: childSnapshot.key as string,
-      ...childSnapshot.val(),
+  snapshot.forEach((doc) => {
+    const dbBin = doc.data() as DBbin;
+    const bin: DBbin = {
+      id: doc.id,
+      location: dbBin.location,
+      status: dbBin.status,
     };
     bins.push(bin);
   });
 
   return bins;
 };
+
+
+
 
 app.get("/api/bins", async (req: Request, res: Response) => {
   try {
@@ -83,7 +100,6 @@ app.post("/api/bins", async (req: Request, res: Response) => {
     await writeDataToDatabase(binData);
     res.status(200).json({ message: "Data saved successfully" });
     // Emit the 'bins-updated' event to all connected clients
-
     const bins = await getAllBinsFromDatabase();
     sendUpdatedBinsToClients(bins);
   } catch (error) {

@@ -1,19 +1,22 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import Image from "next/image";
 import Link from "next/link";
 import Head from "next/head";
 import { Bin } from "../types";
-import io from 'socket.io-client';
+import io from "socket.io-client";
 
 type LatLngLiteral = google.maps.LatLngLiteral;
 type MapOptions = google.maps.MapOptions;
 
 const Map = () => {
   const mapRef = useRef<google.maps.Map>();
-  const [center, setCenter] = useState<LatLngLiteral>({ lat: 18.795598, lng: 98.9510693 });
+  const [center, setCenter] = useState<LatLngLiteral>({
+    lat: 18.795598,
+    lng: 98.9510693,
+  });
 
   const centerRef = useRef(center);
 
@@ -25,10 +28,13 @@ const Map = () => {
     []
   );
 
-  const onLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-    centerRef.current = center;
-  }, [center]);
+  const onLoad = useCallback(
+    (map: google.maps.Map) => {
+      mapRef.current = map;
+      centerRef.current = center;
+    },
+    [center]
+  );
 
   const onDragEnd = useCallback(() => {
     if (mapRef.current) {
@@ -49,15 +55,16 @@ const Map = () => {
   const [bins, setBins] = useState<Bin[]>([]);
 
   const socketInitializer = async () => {
-    const response = await fetch('http://localhost:3030/api/socket');
+    const response = await fetch("http://localhost:3030/api/socket");
+
     const { endpoint } = await response.json();
     const socket = io(endpoint);
 
-    socket.on('connect', () => {
-      console.log('connected');
+    socket.on("connect", () => {
+      console.log("connected");
     });
 
-    socket.on('bins-updated', (data: string) => {
+    socket.on("bins-updated", (data: string) => {
       const bins = JSON.parse(data);
       setBins(bins);
 
@@ -72,18 +79,44 @@ const Map = () => {
     socketInitializer();
   }, []);
 
-
   const BinMarker = ({ id, location, status }: Bin) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const latestStatus = status[status.length - 1];
+
+    const toggleInfoWindow = () => {
+      setIsOpen(!isOpen);
+    };
+
     const icon = {
       path: google.maps.SymbolPath.CIRCLE,
-      fillColor: status === "full" ? "red" : "green",
+      fillColor: latestStatus.isFull ? "red" : "green",
       fillOpacity: 0.8,
       scale: 8,
       strokeColor: "white",
       strokeWeight: 2,
     };
 
-    return <Marker key={id} position={location} icon={icon} />;
+    return (
+      <>
+        <Marker
+          key={id}
+          position={location}
+          icon={icon}
+          onClick={toggleInfoWindow}
+        />
+        {isOpen && (
+          <InfoWindow onCloseClick={toggleInfoWindow} position={location}>
+            <div style={{ color: "black" }}>
+              <p>ID: {id}</p>
+              <p>Location: {location.label}</p>
+              <p>Status: {latestStatus.isFull ? "Full" : "Not Full"}</p>
+              <p>Last Updated: {latestStatus.time}</p>
+            </div>
+          </InfoWindow>
+        )}
+      </>
+    );
   };
 
   return (
@@ -92,7 +125,9 @@ const Map = () => {
         <title>Bin Map</title>
       </Head>
       <LoadScript
-        googleMapsApiKey={ process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_DEFAULT_API_KEY" }
+        googleMapsApiKey={
+          process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_DEFAULT_API_KEY"
+        }
       >
         <GoogleMap
           mapContainerStyle={{ height: "100vh", width: "100vw" }}

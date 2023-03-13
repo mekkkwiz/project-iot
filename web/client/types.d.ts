@@ -5,5 +5,10 @@ export interface Bin {
     lat: number;
     lng: number;
   };
-  status: "full" | "not full";
+  status: [
+    {
+      time: string;
+      isFull: boolean;
+    }
+  ]
 }
